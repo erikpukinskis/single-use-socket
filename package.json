@@ -1,0 +1,25 @@
+{
+  "name": "nrtv-single-use-socket",
+  "version": "0.0.0",
+  "description": "Socket that attaches a handler to a single connection until it closes",
+  "main": "single-use-socket.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erikpukinskis/nrtv-single-use-socket.git"
+  },
+  "dependencies": {
+    "nrtv-library": "*",
+    "nrtv-socket-server": "*"
+  },
+  "scripts": {
+    "test": "node test.js"
+  },
+  "devDependencies": {
+    "nrtv-test": "*",
+    "nrtv-server": "*",
+    "sinon": "*",
+    "ws": "*"
+  },
+  "license": "ISC",
+  "homepage": "https://github.com/erikpukinskis/nrtv-single-use-socket"
+}
