@@ -6,15 +6,22 @@ module.exports = library.export(
   ["nrtv-socket-server", "querystring", "nrtv-server"],
   function(socketServer, querystring, nrtvServer) {
 
-    var handlers = {}
+    var sockets = {}
 
-    function SingleUseSocket(handler) {
+    function SingleUseSocket(onReady) {
       SingleUseSocket.getReady()
 
       this.identifer = Math.random().toString(36).split(".")[1]
 
-      handlers[this.identifer] = handler
+      this.onReady = onReady
+
+      sockets[this.identifer] = this
     }
+
+    SingleUseSocket.prototype.listen =
+      function(handler) {
+        this.handler = handler
+      }
 
     SingleUseSocket.getReady =
       function() {
@@ -32,13 +39,14 @@ module.exports = library.export(
 
       if (id = params.__nrtvSingleUseSocketIdentifier) {
 
-        var handler = handlers[id]
+        var socket = sockets[id]
 
-        if (handler) {
-          connection.on("data", handler)
+        if (socket) {
+          socket.onReady()
+          connection.on("data", socket.handler)
           connection.on("close",
             function() {
-              delete handlers[id]
+              delete sockets[id]
             }
           )
           return

@@ -14,14 +14,21 @@ test.using(
     )
 
     var ws
+    var isConnected
 
     var socket = new SingleUseSocket(
-      function(message) {
-        expect(message).to.equal("burfday chex")
-
-        ws.close()
+      function() {
+        isConnected =true
       }
     )
+
+    socket.listen(function(message) {
+      expect(isConnected).to.be.true
+      
+      expect(message).to.equal("burfday chex")
+
+      ws.close()
+    })
 
     server.start(1187)
 
