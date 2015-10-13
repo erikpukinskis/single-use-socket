@@ -6,19 +6,25 @@ module.exports = library.export(
   ["nrtv-socket-server", "querystring", "nrtv-server"],
   function(socketServer, querystring, nrtvServer) {
 
-    var alreadyListening = false
     var handlers = {}
 
     function SingleUseSocket(handler) {
-      if (!alreadyListening) {
-        socketServer.adoptConnections(handleConnection)
-        alreadyListening = true
-      }
+      SingleUseSocket.getReady()
 
       this.identifer = Math.random().toString(36).split(".")[1]
 
       handlers[this.identifer] = handler
     }
+
+    SingleUseSocket.getReady =
+      function() {
+        if (!alreadyListening) {
+          socketServer.adoptConnections(handleConnection)
+          alreadyListening = true
+        }
+      }
+
+    var alreadyListening = false
 
     function handleConnection(connection, next) {
 

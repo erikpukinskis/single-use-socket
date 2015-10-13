@@ -1,7 +1,7 @@
 {
   "name": "nrtv-single-use-socket",
   "version": "0.1.0",
-  "description": "Socket that attaches a handler to a single connection until it closes",
+  "description": "Attaches a socket handler to a single connection until it closes",
   "main": "single-use-socket.js",
   "repository": {
     "type": "git",
