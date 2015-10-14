@@ -19,6 +19,9 @@ test.using(
     var win = bridge.defineFunction(
       [getFresh],
       function gerrymander(getFresh, message) {
+        if (message != "hi!") {
+          throw new Error("message should be \"hi!\", y'all")
+        }
         document.querySelector("body").innerHTML = "all your representative are belong to us"
         getFresh()
       }

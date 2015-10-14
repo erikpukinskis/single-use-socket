@@ -45,7 +45,9 @@ module.exports = library.export(
             )
 
             function listen(socket) {
-              socket.onmessage = callback
+              socket.onmessage = function(event) {
+                  callback(event.data)
+                }
             }
           }
 
