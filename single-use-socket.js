@@ -71,11 +71,16 @@ module.exports = library.export(
 
         if (socket) {
           socket.connection = connection
-          socket.onReady()
+
+          if (socket.onReady) {
+            socket.onReady()
+          }
+
           connection.on("data", function() {
               socket.handler.apply(null, arguments)
             }
           )
+
           connection.on("close",
             function() {
               delete sockets[id]
@@ -84,6 +89,7 @@ module.exports = library.export(
               }
             }
           )
+
           return
         }
       }
