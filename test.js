@@ -1,30 +1,40 @@
 var test = require("nrtv-test")(require)
 var library = test.library
 
+test.only("defines listen and send functions in the browser")
+
 test.using(
-  "defines a listen function in the browser",
+  "defines listen and send functions in the browser",
   ["./single-use-socket", "nrtv-browse", "nrtv-browser-bridge", library.reset("nrtv-server")],
   function(expect, done, SingleUseSocket, browse, bridge, server) {
 
     var socket = new SingleUseSocket(
       function() {
         socket.send("hi!")
-
-        setTimeout(function() {
-          browser.assert.text("body", "all your representative are belong to us")
-          done()
-          server.stop()
-        }, 50)
       }
     )
 
+    var getFresh = socket.defineSendInBrowser().withArgs("but mooooom")
+
     var win = bridge.defineFunction(
-      function gerrymander(message) {
+      [getFresh],
+      function gerrymander(getFresh, message) {
         document.querySelector("body").innerHTML = "all your representative are belong to us"
+        getFresh()
       }
     )
 
     var listen = socket.defineListenInBrowser().withArgs(win)
+
+    socket.listen(function(message) {
+
+      expect(message).to.equal("but mooooom")
+
+      browser.assert.text("body", "all your representative are belong to us")
+
+      done()
+      server.stop()
+    })
 
     bridge.asap(listen)
 

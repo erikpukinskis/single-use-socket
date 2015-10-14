@@ -32,7 +32,12 @@ module.exports = library.export(
       function() {
         var binding = bridge.defineFunction(
           [socketServer.defineInBrowser()],
-          function(getSocket, id, callback) {
+
+          function listen(getSocket, id, callback) {
+
+            if (typeof callback != "function") {
+              throw new Error("If you want to listen to a socket, you need to provide a function that takes a message and does something with it.")
+            }
 
             getSocket(
               listen,
@@ -42,8 +47,27 @@ module.exports = library.export(
             function listen(socket) {
               socket.onmessage = callback
             }
-
           }
+
+        )
+
+        return binding.withArgs(this.identifer)  
+      }
+
+    SingleUseSocket.prototype.defineSendInBrowser =
+      function() {
+        var binding = bridge.defineFunction(
+          [socketServer.defineInBrowser()],
+
+          function send(getSocket, id, message) {
+            getSocket(
+              function(socket) {
+                socket.send(message)
+              },
+              "?__nrtvSingleUseSocketIdentifier="+id
+            )
+          }
+
         )
 
         return binding.withArgs(this.identifer)  
