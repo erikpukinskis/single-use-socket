@@ -12,13 +12,14 @@
     "nrtv-socket-server": "*"
   },
   "scripts": {
-    "test": "node test.js"
+    "test": "node --harmony test.js"
   },
   "devDependencies": {
     "nrtv-test": "*",
     "nrtv-server": "*",
     "sinon": "*",
-    "ws": "*"
+    "ws": "*",
+    "nrtv-browse": "*"
   },
   "license": "ISC",
   "homepage": "https://github.com/erikpukinskis/nrtv-single-use-socket"
