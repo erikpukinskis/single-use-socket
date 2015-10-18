@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "nrtv-library": "*",
-    "nrtv-socket-server": "*"
+    "nrtv-socket-server": "*",
+    "nrtv-socket": "*"
   },
   "scripts": {
     "test": "node --harmony test.js"

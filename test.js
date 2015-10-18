@@ -1,7 +1,6 @@
 var test = require("nrtv-test")(require)
 var library = test.library
 
-test.only("defines listen and send functions in the browser")
 
 test.using(
   "defines listen and send functions in the browser",
@@ -49,6 +48,8 @@ test.using(
   }
 )
 
+
+setTimeout(function() {
 test.using(
   "receives a message and then stops working (as we would hope)",
   ["./single-use-socket", library.reset("nrtv-server"), "ws", "nrtv-socket-server", "sinon", "nrtv-browse", "nrtv-browser-bridge"],
@@ -78,6 +79,7 @@ test.using(
 
       expect(fallback).not.to.have.been.called
 
+      done.ish("got a message")
       ws.close()
     })
 
@@ -105,3 +107,4 @@ test.using(
 
   }
 )
+},100) // Yuck. There are issues if these tests run simultaneously. They should be fixed.

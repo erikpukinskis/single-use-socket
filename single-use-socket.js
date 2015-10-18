@@ -3,10 +3,11 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "nrtv-single-use-socket",
 
-  ["nrtv-socket-server", "querystring", "nrtv-server", "nrtv-browser-bridge"],
-  function(socketServer, querystring, nrtvServer, bridge) {
+  ["nrtv-socket-server", "nrtv-socket", "querystring", "nrtv-server", "nrtv-browser-bridge"],
+  function(socketServer, socket, querystring, nrtvServer, bridge) {
 
     var sockets = {}
+    var adopted = false
 
     function SingleUseSocket(onReady) {
       SingleUseSocket.getReady()
@@ -31,7 +32,7 @@ module.exports = library.export(
     SingleUseSocket.prototype.defineListenInBrowser =
       function() {
         var binding = bridge.defineFunction(
-          [socketServer.defineInBrowser()],
+          [socket.defineGetInBrowser()],
 
           function listen(getSocket, id, callback) {
 
@@ -59,7 +60,7 @@ module.exports = library.export(
     SingleUseSocket.prototype.defineSendInBrowser =
       function() {
         var binding = bridge.defineFunction(
-          [socketServer.defineInBrowser()],
+          [socket.defineGetInBrowser()],
 
           function send(getSocket, id, message) {
             getSocket(
@@ -77,13 +78,10 @@ module.exports = library.export(
 
     SingleUseSocket.getReady =
       function() {
-        if (!alreadyListening) {
-          socketServer.adoptConnections(handleConnection)
-          alreadyListening = true
-        }
+        if (adopted) { return }
+        socketServer.adoptConnections(handleConnection)      
+        adopted = true
       }
-
-    var alreadyListening = false
 
     function handleConnection(connection, next) {
 
