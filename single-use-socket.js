@@ -3,11 +3,8 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "nrtv-single-use-socket",
 
-  ["nrtv-socket-server", "nrtv-socket", "querystring", "nrtv-server", "nrtv-browser-bridge"],
-  function(socketServer, socket, querystring, nrtvServer, bridge) {
-
-    var sockets = {}
-    var adopted = false
+  [library.collective({sockets: {}, adopted: false}), "nrtv-socket-server", "nrtv-socket", "querystring", "nrtv-server", "nrtv-browser-bridge"],
+  function(collective, socketServer, socket, querystring, nrtvServer, bridge) {
 
     function SingleUseSocket(onReady) {
       SingleUseSocket.getReady()
@@ -16,7 +13,7 @@ module.exports = library.export(
 
       this.onReady = onReady
 
-      sockets[this.identifer] = this
+      collective.sockets[this.identifer] = this
     }
 
     SingleUseSocket.prototype.listen =
@@ -78,9 +75,9 @@ module.exports = library.export(
 
     SingleUseSocket.getReady =
       function() {
-        if (adopted) { return }
+        if (collective.adopted) { return }
         socketServer.adoptConnections(handleConnection)      
-        adopted = true
+        collective.adopted = true
       }
 
     function handleConnection(connection, next) {
@@ -91,7 +88,7 @@ module.exports = library.export(
 
       if (id = params.__nrtvSingleUseSocketIdentifier) {
 
-        var socket = sockets[id]
+        var socket = collective.sockets[id]
 
         if (socket) {
           socket.connection = connection
@@ -107,7 +104,7 @@ module.exports = library.export(
 
           connection.on("close",
             function() {
-              delete sockets[id]
+              delete collective.sockets[id]
               if (socket.onClose) {
                 socket.onClose()
               }
