@@ -76,7 +76,7 @@ module.exports = library.export(
     SingleUseSocket.getReady =
       function() {
         if (collective.adopted) { return }
-        socketServer.adoptConnections(handleConnection)      
+        socketServer.use(handleConnection)      
         collective.adopted = true
       }
 
