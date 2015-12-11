@@ -1,63 +1,17 @@
 var test = require("nrtv-test")(require)
 var library = test.library
 
-
 test.using(
-  "defines listen and send functions in the browser",
-  ["./single-use-socket", "nrtv-browse", "nrtv-browser-bridge", library.reset("nrtv-server")],
-  function(expect, done, SingleUseSocket, browse, bridge, server) {
+  "stops working after the connection is closed",
+  ["./single-use-socket", "nrtv-server", "ws", "nrtv-socket-server", "sinon", "nrtv-browse", "nrtv-browser-bridge"],
+  function(expect, done, SingleUseSocket, Server, WebSocket, SocketServer, sinon, browse, bridge) {
 
-    var socket = new SingleUseSocket(
-      function() {
-        socket.send("hi!")
-      }
-    )
-
-    var getFresh = socket.defineSendInBrowser().withArgs("but mooooom")
-
-    var win = bridge.defineFunction(
-      [getFresh],
-      function gerrymander(getFresh, message) {
-        if (message != "hi!") {
-          throw new Error("message should be \"hi!\", y'all")
-        }
-        document.querySelector("body").innerHTML = "all your representative are belong to us"
-        getFresh()
-      }
-    )
-
-    var listen = socket.defineListenInBrowser().withArgs(win)
-
-    socket.listen(function(message) {
-
-      expect(message).to.equal("but mooooom")
-
-      browser.assert.text("body", "all your representative are belong to us")
-
-      done()
-      server.stop()
-    })
-
-    bridge.asap(listen)
-
-    server.get("/", bridge.sendPage())
-
-    server.start(9913)
-
-    var browser = browse("http://localhost:9913")
-  }
-)
-
-
-setTimeout(function() {
-test.using(
-  "receives a message and then stops working (as we would hope)",
-  ["./single-use-socket", library.reset("nrtv-server"), "ws", "nrtv-socket-server", "sinon", "nrtv-browse", "nrtv-browser-bridge"],
-  function(expect, done, SingleUseSocket, server, WebSocket, socketServer, sinon, browse, bridge) {
+    var server = new Server()
+    var socketServer = new SocketServer(server)
 
     var fallback = sinon.spy()
 
-    socketServer.adoptConnections(
+    socketServer.use(
       function(connection, next) {
         fallback()
       }
@@ -67,19 +21,22 @@ test.using(
     var isConnected
 
     var socket = new SingleUseSocket(
+      server,
       function() {
-        isConnected =true
+        isConnected = true
       }
     )
 
     socket.listen(function(message) {
       expect(isConnected).to.be.true
+      done.ish("connected")
 
       expect(message).to.equal("burfday chex")
+      done.ish("sent message")
 
       expect(fallback).not.to.have.been.called
 
-      done.ish("got a message")
+      done.ish("didn't call fallback")
       ws.close()
     })
 
@@ -95,6 +52,7 @@ test.using(
       expect(fallback).to.have.been.called
       done()
       server.stop()
+      testInterface()
     }
 
     server.start(1187)
@@ -107,4 +65,154 @@ test.using(
 
   }
 )
-},100) // Yuck. There are issues if these tests run simultaneously. They should be fixed.
+
+function testInterface() {
+
+  test.using(
+    "listen on server",
+    ["./single-use-socket", "nrtv-server", "ws"],
+    function(expect, done, SingleUseSocket, Server, WebSocket) {
+      var server = new Server()
+      var socket = new SingleUseSocket(server)
+      server.start(8765)
+
+      socket.listen(function(message) {
+        expect(message).to.equal("barb")
+        server.stop()
+        done()
+      })
+
+      var ws = new WebSocket(
+        socket.url()
+      )
+         
+      ws.on("open", function() {
+        ws.send("barb")
+      })
+
+    }
+  )
+
+  test.using(
+    "send from server",
+    ["./single-use-socket", "nrtv-server", "ws"],
+    function(expect, done, SingleUseSocket, Server, WebSocket) {
+
+      var server = new Server()
+      var socket = new SingleUseSocket(server)
+      server.start(4491)
+
+      var ws = new WebSocket(
+        socket.url()
+      )
+
+      ws.on("message",
+        function(message) {
+          expect(message).to.equal("justice")
+          done()
+          server.stop()
+        }
+      )
+
+      socket.send("justice")
+    }
+  )
+
+  test.using(
+    "send from browser",
+    ["./single-use-socket", "nrtv-browse", library.reset("nrtv-browser-bridge"), "nrtv-server"],
+    function(expect, done, SingleUseSocket, browse, bridge, Server) {
+
+      var server = new Server()
+      var socket = new SingleUseSocket(server)
+      var finishUp
+      var heardBack = false
+
+      socket.listen(function(message) {
+        expect(message).to.equal("jones")
+        if (finishUp) { finishUp() }
+        else { heardBack = true }
+      })
+
+      var jones = socket.defineSendInBrowser().withArgs("jones")
+
+      bridge.asap(jones)
+
+      server.addRoute("get", "/", bridge.sendPage())
+
+      server.start(9913)
+
+      browse("http://localhost:9913",
+        function(browser) {
+          finishUp = function() {
+            browser.done()
+            server.stop()
+            done()
+          }
+          if (heardBack) { finishUp() }
+        }
+      )
+
+    }
+  )
+
+  test.using(  
+    "listen in browser",
+    ["./single-use-socket", "nrtv-browse", library.reset("nrtv-browser-bridge"), "nrtv-server", "nrtv-make-request"],
+    function(expect, done, SingleUseSocket, browse, bridge, Server, makeRequest) {
+
+      var server = new Server()
+      var socket = new SingleUseSocket(server)
+      var finishUp
+
+      var listen = bridge.defineFunction(
+        [
+          socket.defineListenInBrowser(),
+          makeRequest.defineInBrowser()
+        ],
+        function(listen, makeRequest) {
+          listen(function(message) {
+            makeRequest("/finish", {
+              method: "post",
+              data: {message: message}
+            })
+          })
+
+          makeRequest("/ready", {method: "post"})
+        }
+      )
+      
+      bridge.asap(listen)
+
+      server.addRoute("post", "/finish",
+        function(request, response) {
+          response.json({})
+          expect(request.body.message).to.equal("yum")
+          finishUp()
+        }
+      )
+
+      server.addRoute("post", "/ready",
+        function(request, response) {
+          response.json({})
+          socket.send("yum")
+        }
+      )
+
+      server.addRoute("get", "/", bridge.sendPage())
+
+      server.start(9155)
+
+      browse("http://localhost:9155",
+        function(browser) {
+          finishUp = function() {
+            browser.done()
+            server.stop()
+            done()
+          }
+        }
+      )
+    }
+  )
+
+}
