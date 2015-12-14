@@ -7,8 +7,7 @@ module.exports = library.export(
   function(SocketServer, socket, querystring, nrtvServer, bridge) {
 
     function SingleUseSocket() {
-
-      this.identifer = Math.random().toString(36).split(".")[1]
+      this.identifier = Math.random().toString(36).split(".")[1]
 
       this.readyCallbacks = []
 
@@ -26,70 +25,69 @@ module.exports = library.export(
         this.server = nrtvServer
       }
 
-      listenFor(this, this.server)
+      var sockets = SingleUseSocket.installOn(this.server)
+
+      sockets[this.identifier] = this
     }
 
-    function listenFor(socket, server) {
-      var socketServer = SocketServer.onServer(server)
+    SingleUseSocket.installOn =
+      function(server) {
+        var socketServer = SocketServer.onServer(server)
 
-      var sockets = socketServer.__nrtvSingleUseSockets
+        var sockets = socketServer.__nrtvSingleUseSockets
 
-      if (!sockets) {
-        sockets = socketServer.__nrtvSingleUseSockets = {}
+        if (!sockets) {
+          sockets = socketServer.__nrtvSingleUseSockets = {}
 
-        socketServer.use(
-          handleConnection.bind(null, sockets)
-        )
+          socketServer.use(
+            handleConnection.bind(null, sockets)
+          )
+        }
+
+        return sockets
       }
-
-      sockets[socket.identifer] = socket
-    }
 
 
     function handleConnection(sockets, connection, next) {
 
       var params = querystring.parse(connection.url.split("?")[1])
 
-      var socket = this
-
       var id = params.__nrtvSingleUseSocketIdentifier
 
-      if (id) {
+      var sus = id && sockets[id]
 
-        var socket = sockets[id]
+      if (!sus) {
+        next()
+      } else {
+        sus.connection = connection
 
-        if (socket) {
-          socket.connection = connection
+        sus.readyCallbacks.forEach(
+          function callIt(x) { x() }
+        )
 
-          socket.readyCallbacks.forEach(function(x) { x() })
-
-          connection.on("data", function() {
-              socket.handler.apply(null, arguments)
+        connection.on("close",
+          function() {
+            delete sockets[id]
+            if (sus.onClose) {
+              sus.onClose()
             }
-          )
+          }
+        )
 
-          connection.on("close",
-            function() {
-              delete sockets[id]
-              if (socket.onClose) {
-                socket.onClose()
-              }
-            }
-          )
-
-          return
-        }
+        connection.on("data",
+          function() {
+            sus.handler.apply(null, arguments)
+          }
+        )
       }
-
-      next()
     }
 
     SingleUseSocket.prototype.listen =
       function(handler) {
-        var socket = this
+        var sus = this
         this.handler =
           function(message) {
-            console.log("RECV", message, "← socket☼"+socket.identifer)
+            console.log("RECV", message, "← socket☼"+sus.identifier)
             handler(message)
           }
       }
@@ -99,7 +97,7 @@ module.exports = library.export(
         if (!this.connection) {
           this.readyCallbacks.push(this.send.bind(this, message))
         } else {
-          console.log("SEND", "→", "socket☼"+this.identifer, message)
+          console.log("SEND", "→", "socket☼"+this.identifier, message)
           this.connection.write(message)
         }
       }
@@ -130,7 +128,7 @@ module.exports = library.export(
 
         )
 
-        return binding.withArgs(this.identifer)  
+        return binding.withArgs(this.identifier)  
       }
 
     SingleUseSocket.prototype.defineSendInBrowser =
@@ -151,7 +149,7 @@ module.exports = library.export(
 
         )
 
-        return binding.withArgs(this.identifer)  
+        return binding.withArgs(this.identifier)  
       }
 
     SingleUseSocket.prototype.onClose =
@@ -161,7 +159,7 @@ module.exports = library.export(
 
     SingleUseSocket.prototype.url =
       function() {
-        return "ws://localhost:"+this.server.getPort()+"/echo/websocket?__nrtvSingleUseSocketIdentifier="+this.identifer
+        return "ws://localhost:"+this.server.getPort()+"/echo/websocket?__nrtvSingleUseSocketIdentifier="+this.identifier
       }
     
     return SingleUseSocket
