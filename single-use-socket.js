@@ -36,6 +36,10 @@ module.exports = library.export(
 
         var sockets = socketServer.__nrtvSingleUseSockets
 
+        if (!sockets && server.isStarted()) {
+          throw new Error("If you want to use sockets, we need to know that ahead of time. Try doing SingleUseSocket.installOn(server) before you start your server.")
+        }
+
         if (!sockets) {
           sockets = socketServer.__nrtvSingleUseSockets = {}
 
