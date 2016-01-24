@@ -109,8 +109,11 @@ module.exports = library.export(
       }
 
     SingleUseSocket.prototype.defineListenInBrowser =
-      function() {
-        var binding = bridge.defineFunction(
+      function(theirBridge) {
+        var binding = (
+          theirBridge
+          || bridge
+        ).defineFunction(
           [socket.defineGetInBrowser()],
 
           function listen(getSocket, id, callback) {
@@ -138,8 +141,11 @@ module.exports = library.export(
       }
 
     SingleUseSocket.prototype.defineSendInBrowser =
-      function() {
-        var binding = bridge.defineFunction(
+      function(theirBridge) {
+        var binding = (
+          theirBridge
+          || bridge
+        ).defineFunction(
           [socket.defineGetInBrowser()],
 
           function send(getSocket, id, message) {
