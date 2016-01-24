@@ -142,12 +142,11 @@ module.exports = library.export(
 
     SingleUseSocket.prototype.defineSendInBrowser =
       function(theirBridge) {
-        var binding = (
-          theirBridge
-          || bridge
-        ).defineFunction(
-          [socket.defineGetInBrowser()],
 
+        var binding = (
+          theirBridge || bridge
+        ).defineFunction(
+          [socket.defineGetInBrowser(theirBridge)],
           function send(getSocket, id, message) {
             getSocket(
               function(socket) {
