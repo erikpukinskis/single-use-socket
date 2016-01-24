@@ -14,7 +14,9 @@ module.exports = library.export(
       for(var i=0; i<arguments.length; i++) {
         var arg = arguments[i]
 
-        if (typeof arg == "function") {
+        if (typeof arg == "undefined") {
+          throw new Error("You passed "+arg+" as the "+i+"th argument to the SingleUseSocket constructor. Were you expecting that to be a callback or a server?")
+        } else if (typeof arg == "function") {
           this.readyCallbacks.push(arg)
         } else if (arg.app) {
           this.server = arg
@@ -65,9 +67,9 @@ module.exports = library.export(
       } else {
         sus.connection = connection
 
-        sus.readyCallbacks.forEach(
-          function callIt(x) { x() }
-        )
+        sus.readyCallbacks.forEach(callIt)
+
+        function callIt(x) { x() }
 
         connection.on("close",
           function() {
