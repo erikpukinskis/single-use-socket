@@ -114,7 +114,7 @@ module.exports = library.export(
           theirBridge
           || bridge
         ).defineFunction(
-          [socket.defineGetInBrowser()],
+          [socket.defineGetInBrowser(theirBridge)],
 
           function listen(getSocket, id, callback) {
 
