@@ -20,7 +20,8 @@
     "nrtv-server": "*",
     "sinon": "*",
     "ws": "*",
-    "nrtv-browse": "*"
+    "nrtv-browse": "*",
+    "browser-bridge": "*"
   },
   "license": "ISC",
   "homepage": "https://github.com/erikpukinskis/nrtv-single-use-socket"

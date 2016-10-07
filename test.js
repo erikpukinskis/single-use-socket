@@ -120,8 +120,8 @@ function testInterface() {
 
   test.using(
     "send from browser",
-    ["./single-use-socket", "nrtv-browse", library.reset("nrtv-browser-bridge"), "nrtv-server"],
-    function(expect, done, SingleUseSocket, browse, bridge, Server) {
+    ["./single-use-socket", "nrtv-browse", "browser-bridge", "nrtv-server"],
+    function(expect, done, SingleUseSocket, browse, BrowserBridge, Server) {
 
       var server = new Server()
       var socket = new SingleUseSocket(server)
@@ -134,7 +134,9 @@ function testInterface() {
         else { heardBack = true }
       })
 
-      var jones = socket.defineSendInBrowser().withArgs("jones")
+      var bridge = new BrowserBridge()
+
+      var jones = socket.defineSendOn(bridge).withArgs("jones")
 
       bridge.asap(jones)
 
@@ -158,17 +160,18 @@ function testInterface() {
 
   test.using(  
     "listen in browser",
-    ["./single-use-socket", "nrtv-browse", library.reset("nrtv-browser-bridge"), "nrtv-server", "nrtv-make-request"],
-    function(expect, done, SingleUseSocket, browse, bridge, Server, makeRequest) {
+    ["./single-use-socket", "nrtv-browse", "browser-bridge", "nrtv-server", "make-request"],
+    function(expect, done, SingleUseSocket, browse, BrowserBridge, Server, makeRequest) {
 
       var server = new Server()
       var socket = new SingleUseSocket(server)
       var finishUp
+      var bridge = new BrowserBridge()
 
       var listen = bridge.defineFunction(
         [
-          socket.defineListenInBrowser(),
-          makeRequest.defineInBrowser()
+          socket.defineListenOn(bridge),
+          makeRequest.defineOn(bridge)
         ],
         function(listen, makeRequest) {
           listen(function(message) {

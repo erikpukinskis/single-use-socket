@@ -3,8 +3,8 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "nrtv-single-use-socket",
 
-  ["nrtv-socket-server", "nrtv-socket", "querystring", "nrtv-server", "nrtv-browser-bridge"],
-  function(SocketServer, socket, querystring, nrtvServer, bridge) {
+  ["nrtv-socket-server", "nrtv-socket", "querystring", "nrtv-server"],
+  function(SocketServer, socket, querystring, nrtvServer) {
 
     function SingleUseSocket() {
       this.identifier = Math.random().toString(36).split(".")[1]
@@ -108,13 +108,10 @@ module.exports = library.export(
         }
       }
 
-    SingleUseSocket.prototype.defineListenInBrowser =
-      function(theirBridge) {
-        var binding = (
-          theirBridge
-          || bridge
-        ).defineFunction(
-          [socket.defineGetInBrowser(theirBridge)],
+    SingleUseSocket.prototype.defineListenOn =
+      function(bridge) {
+        var binding = bridge.defineFunction(
+          [socket.defineGetOn(bridge)],
 
           function listen(getSocket, id, callback) {
 
@@ -140,13 +137,11 @@ module.exports = library.export(
         return binding.withArgs(this.identifier)  
       }
 
-    SingleUseSocket.prototype.defineSendInBrowser =
-      function(theirBridge) {
+    SingleUseSocket.prototype.defineSendOn =
+      function(bridge) {
 
-        var binding = (
-          theirBridge || bridge
-        ).defineFunction(
-          [socket.defineGetInBrowser(theirBridge)],
+        var binding = bridge.defineFunction(
+          [socket.defineGetOn(bridge)],
           function send(getSocket, id, message) {
             getSocket(
               function(socket) {
