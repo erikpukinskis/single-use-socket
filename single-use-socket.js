@@ -3,8 +3,8 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "nrtv-single-use-socket",
 
-  ["nrtv-socket-server", "nrtv-socket", "querystring", "nrtv-server"],
-  function(SocketServer, socket, querystring, nrtvServer) {
+  ["get-socket", "querystring", "nrtv-server"],
+  function(getSocket, querystring, nrtvServer) {
 
     function SingleUseSocket() {
       this.identifier = Math.random().toString(36).split(".")[1]
@@ -34,18 +34,21 @@ module.exports = library.export(
 
     SingleUseSocket.installOn =
       function(server) {
-        var socketServer = SocketServer.onServer(server)
+        var sockets = server.__nrtvSingleUseSockets
 
-        var sockets = socketServer.__nrtvSingleUseSockets
+        if (sockets) {
+          return sockets
+        }
 
         if (!sockets && server.isStarted()) {
           throw new Error("If you want to use sockets, we need to know that ahead of time. Try doing SingleUseSocket.installOn(server) before you start your server.")
         }
 
         if (!sockets) {
-          sockets = socketServer.__nrtvSingleUseSockets = {}
+          sockets = server.__nrtvSingleUseSockets = {}
 
-          socketServer.use(
+          getSocket.handleConnections(
+            server,
             handleConnection.bind(null, sockets)
           )
         }
@@ -54,37 +57,33 @@ module.exports = library.export(
       }
 
 
-    function handleConnection(sockets, connection, next) {
+    function handleConnection(singleUseSockets, socket, next) {
 
-      var params = querystring.parse(connection.url.split("?")[1])
+      var params = querystring.parse(socket.url.split("?")[1])
 
       var id = params.__nrtvSingleUseSocketIdentifier
 
-      var sus = id && sockets[id]
+      var sus = id && singleUseSockets[id]
 
       if (!sus) {
         next()
       } else {
-        sus.connection = connection
+        sus.socket = socket
 
         sus.readyCallbacks.forEach(callIt)
 
         function callIt(x) { x() }
 
-        connection.on("close",
-          function() {
-            delete sockets[id]
-            if (sus.onClose) {
-              sus.onClose()
-            }
+        socket.onClose(function() {
+          delete singleUseSockets[id]
+          if (sus.onClose) {
+            sus.onClose()
           }
-        )
+        })
 
-        connection.on("data",
-          function() {
-            sus.handler.apply(null, arguments)
-          }
-        )
+        socket.listen(function() {
+          sus.handler.apply(null, arguments)
+        })
       }
     }
 
@@ -100,18 +99,18 @@ module.exports = library.export(
 
     SingleUseSocket.prototype.send =
       function(message) {
-        if (!this.connection) {
+        if (!this.socket) {
           this.readyCallbacks.push(this.send.bind(this, message))
         } else {
           console.log("SEND", "→", "socket☼"+this.identifier, message)
-          this.connection.write(message)
+          this.socket.send(message)
         }
       }
 
     SingleUseSocket.prototype.defineListenOn =
       function(bridge) {
         var binding = bridge.defineFunction(
-          [socket.defineGetOn(bridge)],
+          [getSocket.defineOn(bridge)],
 
           function listen(getSocket, id, callback) {
 
@@ -141,7 +140,7 @@ module.exports = library.export(
       function(bridge) {
 
         var binding = bridge.defineFunction(
-          [socket.defineGetOn(bridge)],
+          [getSocket.defineOn(bridge)],
           function send(getSocket, id, message) {
             getSocket(
               function(socket) {

@@ -1,17 +1,16 @@
 var test = require("nrtv-test")(require)
-var library = test.library
 
 test.using(
   "stops working after the connection is closed",
-  ["./single-use-socket", "nrtv-server", "ws", "nrtv-socket-server", "sinon", "nrtv-browse", "nrtv-browser-bridge"],
-  function(expect, done, SingleUseSocket, Server, WebSocket, SocketServer, sinon, browse, bridge) {
+  ["./", "nrtv-server", "ws", "get-socket", "sinon", "nrtv-browse", "nrtv-browser-bridge"],
+  function(expect, done, SingleUseSocket, Server, WebSocket, getSocket, sinon, browse, bridge) {
 
     var server = new Server()
-    var socketServer = new SocketServer(server)
 
     var fallback = sinon.spy()
 
-    socketServer.use(
+    getSocket.handleConnections(
+      server,
       function(connection, next) {
         fallback()
       }
@@ -66,11 +65,12 @@ test.using(
   }
 )
 
+
 function testInterface() {
 
   test.using(
     "listen on server",
-    ["./single-use-socket", "nrtv-server", "ws"],
+    ["./", "nrtv-server", "ws"],
     function(expect, done, SingleUseSocket, Server, WebSocket) {
       var server = new Server()
       var socket = new SingleUseSocket(server)
@@ -95,7 +95,7 @@ function testInterface() {
 
   test.using(
     "send from server",
-    ["./single-use-socket", "nrtv-server", "ws"],
+    ["./", "nrtv-server", "ws"],
     function(expect, done, SingleUseSocket, Server, WebSocket) {
 
       var server = new Server()
@@ -120,7 +120,7 @@ function testInterface() {
 
   test.using(
     "send from browser",
-    ["./single-use-socket", "nrtv-browse", "browser-bridge", "nrtv-server"],
+    ["./", "nrtv-browse", "browser-bridge", "nrtv-server"],
     function(expect, done, SingleUseSocket, browse, BrowserBridge, Server) {
 
       var server = new Server()
@@ -160,7 +160,7 @@ function testInterface() {
 
   test.using(  
     "listen in browser",
-    ["./single-use-socket", "nrtv-browse", "browser-bridge", "nrtv-server", "make-request"],
+    ["./", "nrtv-browse", "browser-bridge", "nrtv-server", "make-request"],
     function(expect, done, SingleUseSocket, browse, BrowserBridge, Server, makeRequest) {
 
       var server = new Server()
