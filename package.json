@@ -9,8 +9,7 @@
   },
   "dependencies": {
     "nrtv-library": "*",
-    "nrtv-socket-server": "*",
-    "nrtv-socket": "*"
+    "get-socket": "*"
   },
   "scripts": {
     "test": "node test.js"
