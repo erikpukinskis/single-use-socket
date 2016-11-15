@@ -187,14 +187,13 @@ function testInterface() {
       
       bridge.asap(listen)
 
-      var requested = false
-      var browsed = false
+      var finished = false
 
       server.addRoute("post", "/finish",
         function(request, response) {
           response.json({})
           expect(request.body.message).to.equal("yum")
-          requested = true
+          finished = true
           finishUp()
         }
       )
@@ -210,15 +209,12 @@ function testInterface() {
 
       server.start(9155)
 
-      var browser = browse("http://localhost:9155", function() {
-        browsed = true
-        finishUp()
-      })
+      var browser = browse("http://localhost:9155", finishUp)
 
       var ready = false
 
       function finishUp() {
-        if (!requested || !browsed) {
+        if (!finished || !browser.ready) {
           return
         }
 
