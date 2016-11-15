@@ -109,50 +109,55 @@ module.exports = library.export(
 
     SingleUseSocket.prototype.defineListenOn =
       function(bridge) {
-        var binding = bridge.defineFunction(
-          [getSocket.defineOn(bridge)],
+        var binding = bridge.__singleUseSocketListenBinding
 
-          function listen(getSocket, id, callback) {
+        if (!binding) {
+          var binding = bridge.__singleUseSocketListenBinding
+           = bridge.defineFunction(
+            [getSocket.defineOn(bridge)], listen)
+        }
 
-            if (typeof callback != "function") {
-              throw new Error("If you want to listen to a socket, you need to provide a function that takes a message and does something with it.")
-            }
+        function listen(getSocket, id, callback) {
 
-            getSocket(
-              listen,
-              "?__nrtvSingleUseSocketIdentifier="+id
-            )
+          if (typeof callback != "function") {
+            throw new Error("If you want to listen to a socket, you need to provide a function that takes a message and does something with it.")
+          }
 
-            function listen(socket) {
+          getSocket(
+            function(socket) {
               socket.onmessage = function(event) {
                   console.log("RECV", "←", "socket☼"+id, event.data)
                   callback(event.data)
                 }
-            }
-          }
+            },
+            "?__nrtvSingleUseSocketIdentifier="+id
+          )
 
-        )
+        }
 
         return binding.withArgs(this.identifier)  
       }
 
     SingleUseSocket.prototype.defineSendOn =
       function(bridge) {
+        var binding = bridge.__singleUseSocketSendBinding
 
-        var binding = bridge.defineFunction(
-          [getSocket.defineOn(bridge)],
-          function send(getSocket, id, message) {
-            getSocket(
-              function(socket) {
-                console.log("SEND", "→ socket☼"+id, message)
+        if (!binding) {
+          var binding = bridge.__singleUseSocketSendBinding
+           = bridge.defineFunction(
+            [getSocket.defineOn(bridge)], send)
+        }
 
-                socket.send(message)
-              },
-              "?__nrtvSingleUseSocketIdentifier="+id
-            )
-          }
+        function send(getSocket, id, message) {
+          getSocket(
+            function(socket) {
+              console.log("SEND", "→ socket☼"+id, message)
 
-        )
+              socket.send(message)
+            },
+            "?__nrtvSingleUseSocketIdentifier="+id
+          )
+        }
 
         return binding.withArgs(this.identifier)  
       }
