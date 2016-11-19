@@ -125,13 +125,15 @@ module.exports = library.export(
 
           getSocket(
             function(socket) {
-              socket.onmessage = function(event) {
-                  console.log("RECV", "←", "socket☼"+id, event.data)
-                  callback(event.data)
-                }
+              socket.listen(andLogIt)
             },
             "?__nrtvSingleUseSocketIdentifier="+id
           )
+
+          function andLogIt(message) {
+            console.log("RECV", "←", "socket☼"+id, message)
+            callback(message)
+          }
 
         }
 

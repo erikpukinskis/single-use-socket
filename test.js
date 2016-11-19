@@ -65,7 +65,6 @@ test.using(
   }
 )
 
-
 function testInterface() {
 
   test.using(
@@ -125,13 +124,12 @@ function testInterface() {
 
       var server = new Server()
       var socket = new SingleUseSocket(server)
-      var finishUp
       var heardBack = false
 
       socket.listen(function(message) {
         expect(message).to.equal("jones")
-        if (finishUp) { finishUp() }
-        else { heardBack = true }
+        heardBack = true
+        finishUp()
       })
 
       var bridge = new BrowserBridge()
@@ -144,16 +142,15 @@ function testInterface() {
 
       server.start(9913)
 
-      browse("http://localhost:9913",
-        function(browser) {
-          finishUp = function() {
-            browser.done()
-            server.stop()
-            done()
-          }
-          if (heardBack) { finishUp() }
-        }
-      )
+      var browser = browse("http://localhost:9913", finishUp)
+
+      function finishUp() {
+        if (!heardBack || !browser.ready) { return }
+
+        browser.done()
+        server.stop()
+        done()
+      }
 
     }
   )
@@ -165,7 +162,6 @@ function testInterface() {
 
       var server = new Server()
       var socket = new SingleUseSocket(server)
-      var finishUp
       var bridge = new BrowserBridge()
 
       var listen = bridge.defineFunction(
@@ -214,9 +210,7 @@ function testInterface() {
       var ready = false
 
       function finishUp() {
-        if (!finished || !browser.ready) {
-          return
-        }
+        if (!finished || !browser.ready) { return }
 
         browser.done()
         server.stop()
