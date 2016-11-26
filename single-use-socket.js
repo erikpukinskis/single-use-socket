@@ -3,8 +3,8 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "nrtv-single-use-socket",
 
-  ["get-socket", "querystring", "nrtv-server"],
-  function(getSocket, querystring, nrtvServer) {
+  ["get-socket", "querystring", "web-site"],
+  function(getSocket, querystring, webSite) {
 
     function SingleUseSocket() {
       this.identifier = Math.random().toString(36).split(".")[1]
@@ -24,7 +24,7 @@ module.exports = library.export(
       }
 
       if (!this.server) {
-        this.server = nrtvServer
+        this.server = webSite
       }
 
       var sockets = SingleUseSocket.installOn(this.server)
@@ -34,6 +34,9 @@ module.exports = library.export(
 
     SingleUseSocket.installOn =
       function(server) {
+        if (!server.isStarted) {
+          throw new Error("not a server")
+        }
         var sockets = server.__nrtvSingleUseSockets
 
         if (sockets) {

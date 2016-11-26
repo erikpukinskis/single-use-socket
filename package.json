@@ -9,14 +9,14 @@
   },
   "dependencies": {
     "nrtv-library": "*",
-    "get-socket": "*"
+    "get-socket": "*",
+    "web-site": "*"
   },
   "scripts": {
     "test": "node test.js"
   },
   "devDependencies": {
     "nrtv-test": "*",
-    "nrtv-server": "*",
     "sinon": "*",
     "ws": "*",
     "nrtv-browse": "*",
