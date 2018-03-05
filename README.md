@@ -15,13 +15,13 @@ site.addRoute("get", "/", function(request, response) {
     site,
     function() {
       // do something when the socket is connected from the browser
-      socket.send("hello!")
+      socket.send("this message will be sent from the server to the browser on connection!")
     }
   )
 
   var bridge = new BrowserBridge().forResponse(response)
 
-  var helloFromBrowser = socket.defineSendOn(bridge).withArgs("jones")
+  var helloFromBrowser = socket.defineSendOn(bridge).withArgs("this message will be sent from the browser to the server on page load")
 
   bridge.asap(helloFromBrowser);
 
@@ -30,10 +30,8 @@ site.addRoute("get", "/", function(request, response) {
   bridge.asap(
     [listenInBrowser],
     function(listen) {
-      listen(function(fromServer) {
-        if (!fromServer.match(/!/)) {
-          throw new Error("needs more enthusiasm")
-        }
+      listen(function(message) {
+        // this is where the message from the server will be received in the browser
       })
     }
   )
@@ -41,11 +39,11 @@ site.addRoute("get", "/", function(request, response) {
   bridge.send()
 
   socket.listen(function(message) {
-    // handle a message from the browser
+    // this is where the message from the browser will be received on the server
   }
 
   socket.onClose(function() {
-    // maybe delete the socket from memory
+    // maybe delete the socket here
   })
 })
 ```
