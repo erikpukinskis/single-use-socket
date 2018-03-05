@@ -1,26 +1,25 @@
-var library = require("nrtv-library")(require)
+var library = require("module-library")(require)
 
 module.exports = library.export(
-  "nrtv-single-use-socket",
-
+  "single-use-socket",
   ["get-socket", "querystring", "web-site"],
   function(getSocket, querystring, webSite) {
 
-    function SingleUseSocket() {
+    function SingleUseSocket(site, callback, etc) {
       this.identifier = Math.random().toString(36).split(".")[1]
 
       this.readyCallbacks = []
 
-      for(var i=0; i<arguments.length; i++) {
-        var arg = arguments[i]
+      if (site && !site.app) {
+        throw new Error("First argument to SingleUseSocket constructor should be a web-site")
+      } else {
+        this.server = site
+      }
 
-        if (typeof arg == "undefined") {
-          throw new Error("You passed "+arg+" as the "+i+"th argument to the SingleUseSocket constructor. Were you expecting that to be a callback or a server?")
-        } else if (typeof arg == "function") {
-          this.readyCallbacks.push(arg)
-        } else if (arg.app) {
-          this.server = arg
-        }
+      if (callback && typeof callback != "function") {
+        throw new Error("Second (optional) argument to SingleUseSocket is a callback")
+      } else if (callback) {
+        this.readyCallbacks.push(callback)
       }
 
       if (!this.server) {

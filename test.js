@@ -1,16 +1,16 @@
-var test = require("nrtv-test")(require)
+var runTest = require("run-test")(require)
 
-test.using(
+runTest(
   "stops working after the connection is closed",
-  ["./", "nrtv-server", "ws", "get-socket", "sinon", "nrtv-browse", "nrtv-browser-bridge"],
-  function(expect, done, SingleUseSocket, Server, WebSocket, getSocket, sinon, browse, bridge) {
+  ["./", "web-site", "ws", "get-socket", "sinon"],
+  function(expect, done, SingleUseSocket, WebSite, WebSocket, getSocket, sinon) {
 
-    var server = new Server()
+    var site = new WebSite()
 
     var fallback = sinon.spy()
 
     getSocket.handleConnections(
-      server,
+      site,
       function(connection, next) {
         fallback()
       }
@@ -20,7 +20,7 @@ test.using(
     var isConnected
 
     var socket = new SingleUseSocket(
-      server,
+      site,
       function() {
         isConnected = true
       }
@@ -50,11 +50,11 @@ test.using(
     function expectFallback() {
       expect(fallback).to.have.been.called
       done()
-      server.stop()
+      site.stop()
       testInterface()
     }
 
-    server.start(1187)
+    site.start(1187)
 
     ws = new WebSocket(socket.url())
 
@@ -67,17 +67,17 @@ test.using(
 
 function testInterface() {
 
-  test.using(
+  runTest(
     "listen on server",
-    ["./", "nrtv-server", "ws"],
-    function(expect, done, SingleUseSocket, Server, WebSocket) {
-      var server = new Server()
-      var socket = new SingleUseSocket(server)
-      server.start(8765)
+    ["./", "web-site", "ws"],
+    function(expect, done, SingleUseSocket, WebSite, WebSocket) {
+      var site = new WebSite()
+      var socket = new SingleUseSocket(site)
+      site.start(8765)
 
       socket.listen(function(message) {
         expect(message).to.equal("barb")
-        server.stop()
+        site.stop()
         done()
       })
 
@@ -92,14 +92,14 @@ function testInterface() {
     }
   )
 
-  test.using(
+  runTest(
     "send from server",
-    ["./", "nrtv-server", "ws"],
-    function(expect, done, SingleUseSocket, Server, WebSocket) {
+    ["./", "web-site", "ws"],
+    function(expect, done, SingleUseSocket, WebSite, WebSocket) {
 
-      var server = new Server()
-      var socket = new SingleUseSocket(server)
-      server.start(4491)
+      var site = new WebSite()
+      var socket = new SingleUseSocket(site)
+      site.start(4491)
 
       var ws = new WebSocket(
         socket.url()
@@ -109,7 +109,7 @@ function testInterface() {
         function(message) {
           expect(message).to.equal("justice")
           done()
-          server.stop()
+          site.stop()
         }
       )
 
@@ -117,13 +117,13 @@ function testInterface() {
     }
   )
 
-  test.using(
+  runTest(
     "send from browser",
-    ["./", "nrtv-browse", "browser-bridge", "nrtv-server"],
-    function(expect, done, SingleUseSocket, browse, BrowserBridge, Server) {
+    ["./", "browser-task", "browser-bridge", "web-site"],
+    function(expect, done, SingleUseSocket, browserTask, BrowserBridge, WebSite) {
 
-      var server = new Server()
-      var socket = new SingleUseSocket(server)
+      var site = new WebSite()
+      var socket = new SingleUseSocket(site)
       var heardBack = false
 
       socket.listen(function(message) {
@@ -138,30 +138,33 @@ function testInterface() {
 
       bridge.asap(jones)
 
-      server.addRoute("get", "/", bridge.sendPage())
+      site.addRoute("get", "/", bridge.requestHandler())
 
-      server.start(9913)
+      site.start(9913)
 
-      var browser = browse("http://localhost:9913", finishUp)
+      var browser = browserTask("http://localhost:9913", finishUp)
 
       function finishUp() {
-        if (!heardBack || !browser.ready) { return }
+        if (!heardBack) {
+          return console.log("didn't get message from browser yet")}
+
+        if (!browser.ready) {
+          return console.log("didn't get browser reference back yet")}
 
         browser.done()
-        server.stop()
-        done()
-      }
+        site.stop()
+        done()}
 
     }
   )
 
-  test.using(  
+  runTest(  
     "listen in browser",
-    ["./", "nrtv-browse", "browser-bridge", "nrtv-server", "make-request"],
-    function(expect, done, SingleUseSocket, browse, BrowserBridge, Server, makeRequest) {
+    ["./", "browser-task", "browser-bridge", "web-site", "make-request"],
+    function(expect, done, SingleUseSocket, browserTask, BrowserBridge, WebSite, makeRequest) {
 
-      var server = new Server()
-      var socket = new SingleUseSocket(server)
+      var site = new WebSite()
+      var socket = new SingleUseSocket(site)
       var bridge = new BrowserBridge()
 
       var listen = bridge.defineFunction(
@@ -185,7 +188,7 @@ function testInterface() {
 
       var finished = false
 
-      server.addRoute("post", "/finish",
+      site.addRoute("post", "/finish",
         function(request, response) {
           response.json({})
           expect(request.body.message).to.equal("yum")
@@ -194,18 +197,18 @@ function testInterface() {
         }
       )
 
-      server.addRoute("post", "/ready",
+      site.addRoute("post", "/ready",
         function(request, response) {
           response.json({})
           socket.send("yum")
         }
       )
 
-      server.addRoute("get", "/", bridge.sendPage())
+      site.addRoute("get", "/", bridge.requestHandler())
 
-      server.start(9155)
+      site.start(9155)
 
-      var browser = browse("http://localhost:9155", finishUp)
+      var browser = browserTask("http://localhost:9155", finishUp)
 
       var ready = false
 
@@ -213,7 +216,7 @@ function testInterface() {
         if (!finished || !browser.ready) { return }
 
         browser.done()
-        server.stop()
+        site.stop()
         done()
       }
     }
