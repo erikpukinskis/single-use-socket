@@ -6,7 +6,7 @@ module.exports = library.export(
   function(getSocket, querystring, webSite) {
 
     function SingleUseSocket(site, callback, etc) {
-      this.identifier = Math.random().toString(36).split(".")[1]
+      this.id = Math.random().toString(36).split(".")[1]
 
       this.readyCallbacks = []
 
@@ -28,7 +28,7 @@ module.exports = library.export(
 
       var sockets = SingleUseSocket.installOn(this.server)
 
-      sockets[this.identifier] = this
+      sockets[this.id] = this
     }
 
     SingleUseSocket.installOn =
@@ -94,7 +94,7 @@ module.exports = library.export(
         var sus = this
         this.handler =
           function(message) {
-            console.log("RECV", message, "← socket☼"+sus.identifier)
+            console.log("RECV", message, "← socket☼"+sus.id)
             handler(message)
           }
       }
@@ -104,7 +104,7 @@ module.exports = library.export(
         if (!this.socket) {
           this.readyCallbacks.push(this.send.bind(this, message))
         } else {
-          console.log("SEND", "→", "socket☼"+this.identifier, message)
+          console.log("SEND", "→", "socket☼"+this.id, message)
           this.socket.send(message)
         }
       }
@@ -139,7 +139,7 @@ module.exports = library.export(
 
         }
 
-        return binding.withArgs(this.identifier)  
+        return binding.withArgs(this.id)  
       }
 
     SingleUseSocket.prototype.defineSendOn =
@@ -163,7 +163,7 @@ module.exports = library.export(
           )
         }
 
-        return binding.withArgs(this.identifier)  
+        return binding.withArgs(this.id)  
       }
 
     SingleUseSocket.prototype.onClose =
@@ -173,7 +173,7 @@ module.exports = library.export(
 
     SingleUseSocket.prototype.url =
       function() {
-        return "ws://localhost:"+this.server.getPort()+"/echo/websocket?__nrtvSingleUseSocketIdentifier="+this.identifier
+        return "ws://localhost:"+this.server.getPort()+"/echo/websocket?__nrtvSingleUseSocketIdentifier="+this.id
       }
     
     return SingleUseSocket
