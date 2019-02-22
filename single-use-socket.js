@@ -154,6 +154,7 @@ module.exports = library.export(
                 socket.send(message)},
               "?__nrtvSingleUseSocketIdentifier="+id)})
 
+        bridge.see("single-use-socket/send", call)
         return call.withArgs(this.id)  
       }
 
