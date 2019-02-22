@@ -1,6 +1,6 @@
 {
   "name": "single-use-socket",
-  "version": "0.27.0",
+  "version": "0.28.0",
   "description": "Attaches a socket handler to a single connection until it closes",
   "main": "single-use-socket.js",
   "repository": {
