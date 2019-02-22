@@ -111,89 +111,71 @@ module.exports = library.export(
 
     SingleUseSocket.prototype.defineListenOn =
       function(bridge) {
-        var binding = bridge.__singleUseSocketListenBinding
+        var call = bridge.remember("single-use-socket/listen")
 
-        if (!binding) {
-          var binding = bridge.__singleUseSocketListenBinding
-           = bridge.defineFunction(
-            [getSocket.defineOn(bridge)], listenToSingleUseSocket)
-        }
+        if (call) {
+          return call.withArgs(this.id)}
 
-        function listenToSingleUseSocket(getSocket, id, callback) {
+        call = bridge.defineFunction([
+          getSocket.defineOn(bridge)],
+          function listenToSingleUseSocket(getSocket, id, callback) {
 
-          if (typeof callback != "function") {
-            throw new Error("If you want to listen to a socket, you need to provide a function that takes a message and does something with it.")
-          }
+            if (typeof callback != "function") {
+              throw new Error("If you want to listen to a socket, you need to provide a function that takes a message and does something with it.")}
 
-          getSocket(
-            function(socket) {
-              socket.listen(andLogIt)
-            },
-            "?__nrtvSingleUseSocketIdentifier="+id
-          )
+            getSocket(
+              function(socket) {
+                socket.listen(andLogIt)
+              },
+              "?__nrtvSingleUseSocketIdentifier="+id)
 
-          function andLogIt(message) {
-            console.log("RECV", "←", "socket☼"+id, message)
-            callback(message)
-          }
+            function andLogIt(message) {
+              console.log("RECV", "←", "socket☼"+id, message)
+              callback(message)
+          }})
 
-        }
-
-        return binding.withArgs(this.id)  
+        return call.withArgs(this.id)
       }
 
     SingleUseSocket.prototype.defineSendOn =
       function(bridge) {
-        var binding = bridge.__singleUseSocketSendBinding
+        var call = bridge.remember("single-use-socket/send")
 
-        if (!binding) {
-          var binding = bridge.__singleUseSocketSendBinding
-           = bridge.defineFunction(
-            [getSocket.defineOn(bridge)], sendToSingleUseSocket)
-        }
+        if (call) {
+          return call.withArgs(
+            this.id)}
 
-        function sendToSingleUseSocket(getSocket, id, message) {
-          getSocket(
-            function(socket) {
-              console.log("SEND", "→ socket☼"+id, message)
+        call = bridge.defineFunction([
+          getSocket.defineOn(bridge)],
+          function sendToSingleUseSocket(getSocket, id, message) {
+            getSocket(
+              function(socket) {
+                console.log("SEND", "→ socket☼"+id, message)
+                socket.send(message)},
+              "?__nrtvSingleUseSocketIdentifier="+id)})
 
-              socket.send(message)
-            },
-            "?__nrtvSingleUseSocketIdentifier="+id
-          )
-        }
-
-        return binding.withArgs(this.id)  
+        return call.withArgs(this.id)  
       }
-
 
     SingleUseSocket.prototype.defineCloseHandlerOn =
       function(bridge) {
-        var binding = bridge.remember("single-use-socket/onClose")
+        var call = bridge.remember("single-use-socket/onClose")
 
-        if (!binding) {
-          var binding = bridge.defineFunction(
-            [getSocket.defineOn(bridge)], onSingleUseSocketClose)
-          bridge.see("single-use-socket/onClose", binding)
-        }
+        if (call) {
+          return call.withArgs(this.id)}
 
-        function onSingleUseSocketClose(getSocket, id, callback) {
-          getSocket(
-            function(socket) {
+        call = bridge.defineFunction([
+          getSocket.defineOn(bridge)],
+          function onSingleUseSocketClose(getSocket, id, callback) {
+            getSocket(
+              function(socket) {
+                socket.onClose(function() {
+                  console.log("CLOSED", " ☼ socket☼"+id)
+                  callback()})},
+              "?__nrtvSingleUseSocketIdentifier="+id)})
 
-              socket.onClose(function() {
-                console.log("CLOSED", " ☼ socket☼"+id)
-                callback()
-              })
-            },
-            "?__nrtvSingleUseSocketIdentifier="+id
-          )
-        }
-
-        return binding.withArgs(this.id)  
+        return call.withArgs(this.id)  
       }
-
-
 
     SingleUseSocket.prototype.onClose =
       function(callback) {
