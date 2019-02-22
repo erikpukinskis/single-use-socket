@@ -182,7 +182,7 @@ module.exports = library.export(
             function(socket) {
 
               socket.onClose(function() {
-                console.log("CLOSED", " ☼ socket☼"+id, message)
+                console.log("CLOSED", " ☼ socket☼"+id)
                 callback()
               })
             },

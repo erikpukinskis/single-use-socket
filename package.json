@@ -8,8 +8,8 @@
     "url": "https://github.com/erikpukinskis/single-use-socket.git"
   },
   "dependencies": {
+    "get-socket": "^0.24.0",
     "module-library": "*",
-    "get-socket": "*",
     "web-site": "*"
   },
   "scripts": {
