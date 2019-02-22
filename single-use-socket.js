@@ -116,10 +116,10 @@ module.exports = library.export(
         if (!binding) {
           var binding = bridge.__singleUseSocketListenBinding
            = bridge.defineFunction(
-            [getSocket.defineOn(bridge)], listen)
+            [getSocket.defineOn(bridge)], listenToSingleUseSocket)
         }
 
-        function listen(getSocket, id, callback) {
+        function listenToSingleUseSocket(getSocket, id, callback) {
 
           if (typeof callback != "function") {
             throw new Error("If you want to listen to a socket, you need to provide a function that takes a message and does something with it.")
@@ -149,10 +149,10 @@ module.exports = library.export(
         if (!binding) {
           var binding = bridge.__singleUseSocketSendBinding
            = bridge.defineFunction(
-            [getSocket.defineOn(bridge)], send)
+            [getSocket.defineOn(bridge)], sendToSingleUseSocket)
         }
 
-        function send(getSocket, id, message) {
+        function sendToSingleUseSocket(getSocket, id, message) {
           getSocket(
             function(socket) {
               console.log("SEND", "→ socket☼"+id, message)
@@ -165,6 +165,35 @@ module.exports = library.export(
 
         return binding.withArgs(this.id)  
       }
+
+
+    SingleUseSocket.prototype.defineCloseHandlerOn =
+      function(bridge) {
+        var binding = bridge.remember("single-use-socket/onClose")
+
+        if (!binding) {
+          var binding = bridge.defineFunction(
+            [getSocket.defineOn(bridge)], onSingleUseSocketClose)
+          bridge.see("single-use-socket/onClose", binding)
+        }
+
+        function onSingleUseSocketClose(getSocket, id, callback) {
+          getSocket(
+            function(socket) {
+
+              socket.onClose(function() {
+                console.log("CLOSED", " ☼ socket☼"+id, message)
+                callback()
+              })
+            },
+            "?__nrtvSingleUseSocketIdentifier="+id
+          )
+        }
+
+        return binding.withArgs(this.id)  
+      }
+
+
 
     SingleUseSocket.prototype.onClose =
       function(callback) {
