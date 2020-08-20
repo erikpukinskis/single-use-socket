@@ -79,7 +79,7 @@ module.exports = library.export(
         socket.onClose(function() {
           delete singleUseSockets[id]
           if (sus.onClose) {
-            sus.onClose()
+            sus.onClose(sus)
           }
         })
 
@@ -155,7 +155,7 @@ module.exports = library.export(
               "?__nrtvSingleUseSocketIdentifier="+id)})
 
         bridge.see("single-use-socket/send", call)
-        return call.withArgs(this.id)  
+        return call.withArgs(this.id)
       }
 
     SingleUseSocket.prototype.defineCloseHandlerOn =
@@ -175,7 +175,7 @@ module.exports = library.export(
                   callback()})},
               "?__nrtvSingleUseSocketIdentifier="+id)})
 
-        return call.withArgs(this.id)  
+        return call.withArgs(this.id)
       }
 
     SingleUseSocket.prototype.onClose =
@@ -187,7 +187,7 @@ module.exports = library.export(
       function() {
         return "ws://localhost:"+this.server.getPort()+"/echo/websocket?__nrtvSingleUseSocketIdentifier="+this.id
       }
-    
+
     return SingleUseSocket
   }
 )
