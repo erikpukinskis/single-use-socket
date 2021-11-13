@@ -8,7 +8,7 @@
     "url": "https://github.com/erikpukinskis/single-use-socket.git"
   },
   "dependencies": {
-    "get-socket": "^0.24.0",
+    "get-socket": "^0.27.0",
     "module-library": "*",
     "web-site": "*"
   },
